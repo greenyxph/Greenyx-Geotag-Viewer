@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Land Measurement</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; width: 100%; touch-action: none; }
+
+    #areaOutput {
+      position: absolute;
+      top: 10px; left: 50%;
+      transform: translateX(-50%);
+      background: white; padding: 6px 10px;
+      font-size: 0.9em; z-index: 1000;
+      border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #recenterBtn {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      background: #006400; color: white;
+      border: none; padding: 6px 10px;
+      font-size: 0.9em; z-index: 1000;
+      border-radius: 4px; cursor: pointer;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+    }
+
+    #toggleViewBtn {
+      position: absolute;
+      bottom: 10px; left: 10px;
+      background: #333; color: white;
+      border: none; padding: 6px 10px;
+      font-size: 0.9em; z-index: 1000;
+      border-radius: 4px; cursor: pointer;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+    }
+
+    .leaflet-control-attribution {
+      display: none !important;
+    }
+
+    .pulse-marker {
+      background: #00ff00;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      position: relative;
+      animation: pulse 1.5s infinite;
+      box-shadow: 0 0 0 rgba(0,255,0,0.4);
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0,255,0,0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(0,255,0,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,255,0,0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="areaOutput"> Draw a shape to measure area</div>
+  <button id="recenterBtn">📍 My Location</button>
+  <button id="toggleViewBtn">🛰️ Satellite View</button>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="https://unpkg.com/leaflet-geometryutil"></script>
+  <script>
+    const map = L.map('map');
+
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 22,
+      attribution: ''
+    });
+
+    const satelliteLayer = L.tileLayer('http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      attribution: '© Google'
+    });
+
+    satelliteLayer.addTo(map);
+    let currentLayer = 'satellite';
+
+    document.getElementById("toggleViewBtn").addEventListener("click", function () {
+      if (currentLayer === 'satellite') {
+        map.removeLayer(satelliteLayer);
+        osmLayer.addTo(map);
+        currentLayer = 'osm';
+        this.innerText = '🗺️ Standard View';
+      } else {
+        map.removeLayer(osmLayer);
+        satelliteLayer.addTo(map);
+        currentLayer = 'satellite';
+        this.innerText = '🛰️ Satellite View';
+      }
+    });
+
+    let locationMarker;
+
+    function centerToUserLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+          map.setView([userLat, userLng], 18);
+
+          if (locationMarker) {
+            map.removeLayer(locationMarker);
+          }
+
+          const pulsingIcon = L.divIcon({
+            className: 'pulse-marker',
+            iconSize: [12, 12]
+          });
+
+          locationMarker = L.marker([userLat, userLng], { icon: pulsingIcon }).addTo(map);
+        }, function() {
+          map.setView([14.9, 120.8], 18);
+        });
+      } else {
+        map.setView([14.9, 120.8], 18);
+      }
+    }
+
+    centerToUserLocation();
+    document.getElementById("recenterBtn").addEventListener("click", centerToUserLocation);
+
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polygon: true,
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false,
+        circlemarker: false
+      },
+      edit: {
+        featureGroup: drawnItems
+      }
+    });
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, function (e) {
+      drawnItems.clearLayers();
+      const layer = e.layer;
+      drawnItems.addLayer(layer);
+
+      const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+      const hectares = (area / 10000).toFixed(2);
+      document.getElementById("areaOutput").innerText = `📏 Area: ${hectares} hectares`;
+    });
+  </script>
+</body>
+</html>
