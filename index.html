@@ -211,6 +211,20 @@ const drawControl = new L.Control.Draw({
       const layer = e.layer;
       drawnItems.addLayer(layer);
 
+      map.on('pm:create', e => {
+  const geo = e.layer.toGeoJSON();
+  const timestamp = new Date().toISOString();
+
+  console.log('🛰️ Geotagged:', {
+    coordinates: geo.geometry.coordinates,
+    timestamp: timestamp
+  });
+
+  // Optional: display it on the map
+  const popupText = `🛰️ Geotagged<br>📍 ${geo.geometry.coordinates}<br>🕒 ${timestamp}`;
+  e.layer.bindPopup(popupText).openPopup();
+});
+
       const latlngs = layer.getLatLngs()[0];
       const area = L.GeometryUtil.geodesicArea(latlngs);
       const hectares = (area / 10000).toFixed(2);
