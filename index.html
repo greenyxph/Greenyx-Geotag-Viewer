@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body { margin: 0; }
     #map { height: 100vh; width: 100%; touch-action: none; }
@@ -28,9 +27,9 @@
       text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
     }
 
-    #recenterBtn, #toggleViewBtn, #downloadSnapshotBtn {
+    #recenterBtn {
       position: absolute;
-      bottom: 10px;
+      bottom: 10px; right: 10px;
       background: #006400; color: white;
       border: none; padding: 6px 10px;
       font-size: 0.9em; z-index: 1000;
@@ -39,14 +38,21 @@
       font-family: sans-serif;
     }
 
-    #recenterBtn { right: 10px; }
-    #toggleViewBtn { left: 10px; background: #333; }
-    #downloadSnapshotBtn { left: 50%; transform: translateX(-50%); bottom: 50px; }
+    #toggleViewBtn {
+      position: absolute;
+      bottom: 10px; left: 10px;
+      background: #333; color: white;
+      border: none; padding: 6px 10px;
+      font-size: 0.9em; z-index: 1000;
+      border-radius: 4px; cursor: pointer;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+    }
 
     .leaflet-control-attribution {
       display: none !important;
     }
-
+    
     .pulse-marker {
       background: #00ff00;
       border-radius: 50%;
@@ -64,21 +70,20 @@
     }
 
     .point-label {
-      background: transparent;
-      color: white;
-      padding: 0;
-      border-radius: 0;
-      font-size: 0.85em;
-      font-weight: bold;
-      font-family: sans-serif;
-    }
+  background: transparent;
+  color: white;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.85em;
+  font-weight: bold;
+  font-family: sans-serif;
+}
   </style>
 </head>
 <body>
   <div id="areaOutput"> Draw a shape to measure area</div>
   <button id="recenterBtn">📍 My Location</button>
   <button id="toggleViewBtn">🛰️ Satellite View</button>
-  <button id="downloadSnapshotBtn">📥 Download Snapshot</button>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -86,6 +91,17 @@
   <script src="https://unpkg.com/leaflet-geometryutil"></script>
   <script>
     const map = L.map('map');
+
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+const sentinel = L.tileLayer('https://tiles.maps.eox.at/wms?layers=s2cloudless&format=image/png');
+
+const baseMaps = {
+  "Street Map": osm,
+  "Satellite (Sentinel-2)": sentinel
+};
+
+L.control.layers(baseMaps).addTo(map);
+sentinel.addTo(map); // default layer
 
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 22,
@@ -156,35 +172,46 @@
 
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
-
-    const drawControl = new L.Control.Draw({
-      draw: {
-        polygon: {
-          shapeOptions: {
-            color: "#228B22",
-            fillColor: "#7CFC00",
-            fillOpacity: 0.4,
-            weight: 2
-          }
-        },
-        polyline: false,
-        rectangle: false,
-        circle: false,
-        marker: false,
-        circlemarker: false
-      },
-      edit: {
-        featureGroup: drawnItems
+    
+const drawControl = new L.Control.Draw({
+  draw: {
+    polygon: {
+      shapeOptions: {
+        color: "#228B22",       // Forest green border
+        fillColor: "#7CFC00",   // Lawn green fill
+        fillOpacity: 0.4,
+        weight: 2
       }
-    });
+    },
+    polyline: false,
+    rectangle: false,
+    circle: false,
+    marker: false,
+    circlemarker: false
+  },
+  edit: {
+    featureGroup: drawnItems
+  }
+});
     map.addControl(drawControl);
 
     function getWeatherDescription(code) {
       const descriptions = {
-        0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-        45: "Fog", 48: "Depositing rime fog", 51: "Light drizzle", 53: "Moderate drizzle",
-        55: "Dense drizzle", 61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
-        80: "Rain showers", 95: "Thunderstorm", 99: "Thunderstorm with hail"
+        0: "Clear sky",
+        1: "Mainly clear",
+        2: "Partly cloudy",
+        3: "Overcast",
+        45: "Fog",
+        48: "Depositing rime fog",
+        51: "Light drizzle",
+        53: "Moderate drizzle",
+        55: "Dense drizzle",
+        61: "Slight rain",
+        63: "Moderate rain",
+        65: "Heavy rain",
+        80: "Rain showers",
+        95: "Thunderstorm",
+        99: "Thunderstorm with hail"
       };
       return descriptions[code] || "Unknown weather";
     }
@@ -202,29 +229,31 @@
       latlngs.forEach((point, index) => {
         coordsText += `📍${index + 1} ${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}<br>`;
         const label = L.divIcon({
-          className: 'point-label',
-          html: `📍${index + 1}`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10]
-        });
-        L.marker([point.lat, point.lng], { icon: label }).addTo(map);
+  className: 'point-label',
+  html: `📍${index + 1}`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10]
+});
+L.marker([point.lat, point.lng], { icon: label }).addTo(map);
       });
 
       map.on('draw:deleted', function () {
-        document.getElementById("areaOutput").innerHTML = "Draw a shape to measure area";
-        map.eachLayer(function (layer) {
-          if (layer instanceof L.Marker && layer.options.icon?.options?.className === 'point-label') {
-            map.removeLayer(layer);
-          }
-        });
-      });
+  // Reset info box
+  document.getElementById("areaOutput").innerHTML = "Draw a shape to measure area";
 
-      const firstPoint = latlng
-            const firstPoint = latlngs[0];
+  // Remove all point labels
+  map.eachLayer(function (layer) {
+    if (layer instanceof L.Marker && layer.options.icon?.options?.className === 'point-label') {
+      map.removeLayer(layer);
+    }
+  });
+});
+
+      const firstPoint = latlngs[0];
       const geocodeUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${firstPoint.lat}&lon=${firstPoint.lng}`;
       const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${firstPoint.lat}&longitude=${firstPoint.lng}&current_weather=true`;
 
-      Promise.all([
+            Promise.all([
         fetch(geocodeUrl).then(res => res.json()),
         fetch(weatherUrl).then(res => res.json())
       ])
@@ -244,22 +273,7 @@
           `📏 Area: ${hectares} hectares<br>${coordsText}📌 Address: Unable to retrieve<br>🌦️ Climate data unavailable`;
       });
     });
-
-    // 📥 Download Snapshot Button Logic
-    document.getElementById("downloadSnapshotBtn").addEventListener("click", function () {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const year = now.getFullYear();
-      const filename = `greenyx_${month}-${day}-${year}.png`;
-
-      html2canvas(document.getElementById("map")).then(function (canvas) {
-        const link = document.createElement("a");
-        link.download = filename;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    });
   </script>
 </body>
 </html>
+       
