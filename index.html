@@ -108,23 +108,13 @@ sentinel.addTo(map); // default layer
       attribution: ''
     });
 
-    const satelliteLayer = L.tileLayer('http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      attribution: '© Google'
-    });
+    const satelliteLayer = L.tileLayer('https://tiles.maps.eox.at/wms?layers=s2cloudless&format=image/png', {
+  maxZoom: 18,
+  attribution: 'Sentinel Imagery © EOX'
+});
 
     satelliteLayer.addTo(map);
     let currentLayer = 'satellite';
-
-    const refreshInterval = 30000;
-    function refreshMapTiles() {
-      map.eachLayer(function (layer) {
-        if (layer instanceof L.TileLayer) {
-          layer.setUrl(layer._url + '?t=' + new Date().getTime());
-        }
-      });
-    }
-    setInterval(refreshMapTiles, refreshInterval);
 
     document.getElementById("toggleViewBtn").addEventListener("click", function () {
       if (currentLayer === 'satellite') {
