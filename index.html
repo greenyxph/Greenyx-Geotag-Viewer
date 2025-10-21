@@ -10,16 +10,9 @@
       padding: 40px;
       background-color: #f4f4f4;
     }
-    input {
+    input, button {
       padding: 10px;
       font-size: 16px;
-      width: 200px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin-left: 10px;
-      cursor: pointer;
     }
     #imageContainer {
       margin-top: 30px;
@@ -46,28 +39,30 @@
 
   <div id="imageContainer"></div>
 
-<script>
-  function loadImage() {
-    const rsbsa = document.getElementById('rsbsaInput').value.trim();
-    const scriptBase = 'https://script.google.com/macros/s/AKfycbyKZbjdnkTzP9gylUeUFsvEplKBUl0zC3LdHM1qC8KM04xh7G4Cevi1rXstykQEzOh7/exec';
+  <script>
+    async function loadImage() {
+      const rsbsa = document.getElementById('rsbsaInput').value.trim();
+      const scriptBase = 'https://script.google.com/macros/s/AKfycbxUgUEfcJ3_0gkmab4YGVf4mVqiZ0428-oSHPOizCrjY6BjfUs5j6nGic5316ZPSDemGQ/exec';
 
-    if (!rsbsa) {
-      document.getElementById('imageContainer').innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
-      return;
+      if (!rsbsa) {
+        document.getElementById('imageContainer').innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
+        return;
+      }
+
+      const response = await fetch(`${scriptBase}?rsbsa=${encodeURIComponent(rsbsa)}`);
+      const imageUrl = await response.text();
+
+      const container = document.getElementById('imageContainer');
+      if (imageUrl.startsWith('http')) {
+        container.innerHTML = `
+          <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">${imageUrl}</a></p>
+          <img src="${imageUrl}" alt="RSBSA ${rsbsa}" width="300">
+        `;
+      } else {
+        container.innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
+      }
     }
-
-    const imageUrl = `${scriptBase}?rsbsa=${encodeURIComponent(rsbsa)}`;
-    const imageTag = `
-      <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">${imageUrl}</a></p>
-      <img src="${imageUrl}" alt="RSBSA ${rsbsa}" width="300" onerror="handleError('${rsbsa}')">
-    `;
-    document.getElementById('imageContainer').innerHTML = imageTag;
-  }
-
-  function handleError(rsbsa) {
-    document.getElementById('imageContainer').innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
-  }
-</script>
+  </script>
 
 </body>
 </html>
