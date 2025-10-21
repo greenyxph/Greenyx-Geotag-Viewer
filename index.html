@@ -47,19 +47,28 @@
   <div id="imageContainer"></div>
 
   <script>
-    function loadImage() {
-      const rsbsa = document.getElementById('rsbsaInput').value.trim();
-      const scriptBase = 'https://script.google.com/macros/s/AKfycbyKZbjdnkTzP9gylUeUFsvEplKBUl0zC3LdHM1qC8KM04xh7G4Cevi1rXstykQEzOh7/exec';
+ async function loadImage() {
+  const rsbsa = document.getElementById('rsbsaInput').value.trim();
+  const scriptBase = 'https://script.google.com/macros/s/AKfycbyKZbjdnkTzP9gylUeUFsvEplKBUl0zC3LdHM1qC8KM04xh7G4Cevi1rXstykQEzOh7/exec';
 
-      if (!rsbsa) {
-        document.getElementById('imageContainer').innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
-        return;
-      }
+  if (!rsbsa) {
+    document.getElementById('imageContainer').innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
+    return;
+  }
 
-      const imageUrl = `${scriptBase}?rsbsa=${encodeURIComponent(rsbsa)}`;
-      const imageTag = `<img src="${imageUrl}" alt="RSBSA ${rsbsa}" width="300" onerror="handleError('${rsbsa}')">`;
+  const response = await fetch(`${scriptBase}?rsbsa=${encodeURIComponent(rsbsa)}`);
+  const imageUrl = await response.text();
 
-      document.getElementById('imageContainer').innerHTML = imageTag;
+  const container = document.getElementById('imageContainer');
+  if (imageUrl.startsWith('http')) {
+    container.innerHTML = `
+      <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">${imageUrl}</a></p>
+      <img src="${imageUrl}" alt="RSBSA ${rsbsa}" width="300">
+    `;
+  } else {
+    container.innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
+  }
+}
     }
 
     function handleError(rsbsa) {
