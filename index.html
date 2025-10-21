@@ -49,27 +49,18 @@
   <script>
     function loadImage() {
       const rsbsa = document.getElementById('rsbsaInput').value.trim();
-      const scriptUrl = 'https://script.google.com/macros/s/AKfycbx2zoi5MKtpml2Wof8m52cfLUjj7GxXEZwP51d_6MS75d8aGy6CB60zrmxMc2xyea6Q/exec?rsbsa=' + rsbsa;
+      const scriptBase = 'https://script.google.com/macros/s/AKfycbx2zoi5MKtpml2Wof8m52cfLUjj7GxXEZwP51d_6MS75d8aGy6CB60zrmxMc2xyea6Q/exec';
 
       if (!rsbsa) {
         document.getElementById('imageContainer').innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
         return;
       }
 
-      fetch(scriptUrl)
-        .then(res => res.text())
-        .then(url => {
-          if (url.startsWith('http')) {
-            document.getElementById('imageContainer').innerHTML = `<img src="${url}" alt="RSBSA ${rsbsa}">`;
-          } else {
-            document.getElementById('imageContainer').innerHTML = `<p class="error">${url}</p>`;
-          }
-        })
-        .catch(() => {
-          document.getElementById('imageContainer').innerHTML = `<p class="error">Error loading image. Please try again.</p>`;
-        });
-    }
-  </script>
+      const imageUrl = `${scriptBase}?rsbsa=${encodeURIComponent(rsbsa)}`;
+      const imageTag = `<img src="${imageUrl}" alt="RSBSA ${rsbsa}" width="300" onerror="handleError('${rsbsa}')">`;
 
-</body>
-</html>
+      document.getElementById('imageContainer').innerHTML = imageTag;
+    }
+
+    function handleError(rsbsa) {
+      document.getElementById('imageContainer').
