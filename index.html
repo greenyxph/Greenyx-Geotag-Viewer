@@ -1,268 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Land Measurement</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <meta charset="UTF-8">
+  <title>GREENYX LandMap Viewer</title>
   <style>
-    body { margin: 0; }
-    #map { height: 100vh; width: 100%; touch-action: none; }
-
-    #areaOutput {
-      position: absolute;
-      top: 10px; left: 50%;
-      transform: translateX(-50%);
-      background: transparent;
-      padding: 4px 8px;
-      font-size: 0.75em;
-      z-index: 1000;
-      border-radius: 4px;
-      font-family: sans-serif;
+    body {
+      font-family: Arial, sans-serif;
       text-align: center;
-      white-space: normal;
-      max-width: 90%;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+      padding: 40px;
+      background-color: #f4f4f4;
     }
-
-    #recenterBtn {
-      position: absolute;
-      bottom: 10px; right: 10px;
-      background: #006400; color: white;
-      border: none; padding: 6px 10px;
-      font-size: 0.9em; z-index: 1000;
-      border-radius: 4px; cursor: pointer;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-      font-family: sans-serif;
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 200px;
     }
-
-    #toggleViewBtn {
-      position: absolute;
-      bottom: 10px; left: 10px;
-      background: #333; color: white;
-      border: none; padding: 6px 10px;
-      font-size: 0.9em; z-index: 1000;
-      border-radius: 4px; cursor: pointer;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-      font-family: sans-serif;
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-left: 10px;
+      cursor: pointer;
     }
-
-    .leaflet-control-attribution {
-      display: none !important;
+    #imageContainer {
+      margin-top: 30px;
     }
-    
-    .pulse-marker {
-      background: #00ff00;
-      border-radius: 50%;
-      width: 12px;
-      height: 12px;
-      position: relative;
-      animation: pulse 1.5s infinite;
-      box-shadow: 0 0 0 rgba(0,255,0,0.4);
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(0,255,0,0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(0,255,0,0); }
-      100% { box-shadow: 0 0 0 0 rgba(0,255,0,0); }
+    .error {
+      color: red;
+      font-weight: bold;
     }
-
-    .point-label {
-  background: transparent;
-  color: white;
-  padding: 0;
-  border-radius: 0;
-  font-size: 0.85em;
-  font-weight: bold;
-  font-family: sans-serif;
-}
   </style>
 </head>
 <body>
-  <div id="areaOutput"> Draw a shape to measure area</div>
-  <button id="recenterBtn">📍 My Location</button>
-  <button id="toggleViewBtn">🛰️ Satellite View</button>
-  <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="https://unpkg.com/leaflet-geometryutil"></script>
+  <h1>GREENYX LandMap Viewer</h1>
+  <p>Enter your RSBSA number to view your geotagged image:</p>
+
+  <input type="text" id="rsbsaInput" placeholder="e.g. 123">
+  <button onclick="loadImage()">Show Image</button>
+
+  <div id="imageContainer"></div>
+
   <script>
-    const map = L.map('map');
+    function loadImage() {
+      const rsbsa = document.getElementById('rsbsaInput').value.trim();
+      const scriptUrl = 'https://script.google.com/macros/s/AKfycbx2zoi5MKtpml2Wof8m52cfLUjj7GxXEZwP51d_6MS75d8aGy6CB60zrmxMc2xyea6Q/exec?rsbsa=' + rsbsa;
 
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 22,
-      attribution: ''
-    });
-
-    const satelliteLayer = L.tileLayer('http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      attribution: '© Google'
-    });
-
-    satelliteLayer.addTo(map);
-    let currentLayer = 'satellite';
-
-    const refreshInterval = 30000;
-    function refreshMapTiles() {
-      map.eachLayer(function (layer) {
-        if (layer instanceof L.TileLayer) {
-          layer.setUrl(layer._url + '?t=' + new Date().getTime());
-        }
-      });
-    }
-    setInterval(refreshMapTiles, refreshInterval);
-
-    document.getElementById("toggleViewBtn").addEventListener("click", function () {
-      if (currentLayer === 'satellite') {
-        map.removeLayer(satelliteLayer);
-        osmLayer.addTo(map);
-        currentLayer = 'osm';
-        this.innerText = '🗺️ Standard View';
-      } else {
-        map.removeLayer(osmLayer);
-        satelliteLayer.addTo(map);
-        currentLayer = 'satellite';
-        this.innerText = '🛰️ Satellite View';
+      if (!rsbsa) {
+        document.getElementById('imageContainer').innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
+        return;
       }
-    });
 
-    let locationMarker;
-
-    function centerToUserLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const userLat = position.coords.latitude;
-          const userLng = position.coords.longitude;
-          map.setView([userLat, userLng], 18);
-
-          if (locationMarker) {
-            map.removeLayer(locationMarker);
+      fetch(scriptUrl)
+        .then(res => res.text())
+        .then(url => {
+          if (url.startsWith('http')) {
+            document.getElementById('imageContainer').innerHTML = `<img src="${url}" alt="RSBSA ${rsbsa}">`;
+          } else {
+            document.getElementById('imageContainer').innerHTML = `<p class="error">${url}</p>`;
           }
-
-          const pulsingIcon = L.divIcon({
-            className: 'pulse-marker',
-            iconSize: [12, 12]
-          });
-
-          locationMarker = L.marker([userLat, userLng], { icon: pulsingIcon }).addTo(map);
-        }, function() {
-          map.setView([14.9, 120.8], 18);
+        })
+        .catch(() => {
+          document.getElementById('imageContainer').innerHTML = `<p class="error">Error loading image. Please try again.</p>`;
         });
-      } else {
-        map.setView([14.9, 120.8], 18);
-      }
     }
-
-    centerToUserLocation();
-    document.getElementById("recenterBtn").addEventListener("click", centerToUserLocation);
-
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-    
-const drawControl = new L.Control.Draw({
-  draw: {
-    polygon: {
-      shapeOptions: {
-        color: "#228B22",       // Forest green border
-        fillColor: "#7CFC00",   // Lawn green fill
-        fillOpacity: 0.4,
-        weight: 2
-      }
-    },
-    polyline: false,
-    rectangle: false,
-    circle: false,
-    marker: false,
-    circlemarker: false
-  },
-  edit: {
-    featureGroup: drawnItems
-  }
-});
-    map.addControl(drawControl);
-
-    function getWeatherDescription(code) {
-      const descriptions = {
-        0: "Clear sky",
-        1: "Mainly clear",
-        2: "Partly cloudy",
-        3: "Overcast",
-        45: "Fog",
-        48: "Depositing rime fog",
-        51: "Light drizzle",
-        53: "Moderate drizzle",
-        55: "Dense drizzle",
-        61: "Slight rain",
-        63: "Moderate rain",
-        65: "Heavy rain",
-        80: "Rain showers",
-        95: "Thunderstorm",
-        99: "Thunderstorm with hail"
-      };
-      return descriptions[code] || "Unknown weather";
-    }
-
-    map.on(L.Draw.Event.CREATED, function (e) {
-      drawnItems.clearLayers();
-      const layer = e.layer;
-      drawnItems.addLayer(layer);
-
-      const latlngs = layer.getLatLngs()[0];
-      const area = L.GeometryUtil.geodesicArea(latlngs);
-      const hectares = (area / 10000).toFixed(2);
-
-      let coordsText = '';
-      latlngs.forEach((point, index) => {
-        coordsText += `📍${index + 1} ${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}<br>`;
-        const label = L.divIcon({
-  className: 'point-label',
-  html: `📍${index + 1}`,
-  iconSize: [20, 20],
-  iconAnchor: [10, 10]
-});
-L.marker([point.lat, point.lng], { icon: label }).addTo(map);
-      });
-
-      map.on('draw:deleted', function () {
-  // Reset info box
-  document.getElementById("areaOutput").innerHTML = "Draw a shape to measure area";
-
-  // Remove all point labels
-  map.eachLayer(function (layer) {
-    if (layer instanceof L.Marker && layer.options.icon?.options?.className === 'point-label') {
-      map.removeLayer(layer);
-    }
-  });
-});
-
-      const firstPoint = latlngs[0];
-      const geocodeUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${firstPoint.lat}&lon=${firstPoint.lng}`;
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${firstPoint.lat}&longitude=${firstPoint.lng}&current_weather=true`;
-
-            Promise.all([
-        fetch(geocodeUrl).then(res => res.json()),
-        fetch(weatherUrl).then(res => res.json())
-      ])
-      .then(([geoData, weatherData]) => {
-        const address = geoData.display_name || "Address not found";
-        const weather = weatherData.current_weather;
-
-        const climateText = weather
-          ? `🌡️ Temperature: ${weather.temperature}°C<br>💨 Wind: ${weather.windspeed} km/h<br>🌤️ Weather: ${getWeatherDescription(weather.weathercode)}<br>🕒 Time: ${weather.time}`
-          : "🌦️ Climate data unavailable";
-
-        document.getElementById("areaOutput").innerHTML =
-          `📏 Area: ${hectares} hectares<br>${coordsText}📌 Address: ${address}<br>${climateText}`;
-      })
-      .catch(() => {
-        document.getElementById("areaOutput").innerHTML =
-          `📏 Area: ${hectares} hectares<br>${coordsText}📌 Address: Unable to retrieve<br>🌦️ Climate data unavailable`;
-      });
-    });
   </script>
+
 </body>
 </html>
-       
