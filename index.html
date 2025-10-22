@@ -17,12 +17,6 @@
     #imageContainer {
       margin-top: 30px;
     }
-    img {
-      max-width: 100%;
-      height: auto;
-      border: 1px solid #ccc;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
     .error {
       color: red;
       font-weight: bold;
@@ -34,14 +28,16 @@
   <h1>GREENYX Geotag Viewer</h1>
   <p>Enter your RSBSA number to view your geotagged image:</p>
 
-  <input type="text" id="rsbsaInput" placeholder="e.g. 123">
+  <input type="text" id="rsbsaInput" placeholder="e.g. 03-54-05-016-000132">
   <button onclick="loadImage()">Show Image</button>
 
   <div id="imageContainer"></div>
 
   <script>
     async function loadImage() {
-      const rsbsa = document.getElementById('rsbsaInput').value.trim();
+      let rsbsa = document.getElementById('rsbsaInput').value.trim();
+      rsbsa = rsbsa.replace(/\D/g, ''); // ✅ Normalize input by removing non-digit characters
+
       const scriptBase = 'https://script.google.com/macros/s/AKfycbxUgUEfcJ3_0gkmab4YGVf4mVqiZ0428-oSHPOizCrjY6BjfUs5j6nGic5316ZPSDemGQ/exec';
 
       if (!rsbsa) {
@@ -55,8 +51,7 @@
       const container = document.getElementById('imageContainer');
       if (imageUrl.startsWith('http')) {
         container.innerHTML = `
-          <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">${imageUrl}</a></p>
-          <img src="${imageUrl}" alt="RSBSA ${rsbsa}" width="300">
+          <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">Geotag image</a></p>
         `;
       } else {
         container.innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
