@@ -39,6 +39,7 @@
       color: white;
       border: none;
       cursor: pointer;
+      border-radius: 4px;
     }
 
     button:hover {
@@ -48,6 +49,26 @@
     #imageContainer {
       margin-top: 20px;
       font-size: 13px;
+    }
+
+    .imageBox {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .imageBox a {
+      font-size: 16px;
+      font-weight: bold;
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .imageBox a:hover {
+      text-decoration: underline;
     }
 
     .error {
@@ -74,7 +95,7 @@
   <script>
     async function loadImage() {
       let rsbsa = document.getElementById('rsbsaInput').value.trim();
-      rsbsa = rsbsa.replace(/\D/g, ''); // ✅ Normalize input
+      rsbsa = rsbsa.replace(/\D/g, '');
 
       const container = document.getElementById('imageContainer');
       container.innerHTML = '<p class="loading">Loading geotag image... please wait.</p>';
@@ -92,7 +113,10 @@
 
         if (imageUrl.startsWith('http')) {
           container.innerHTML = `
-            <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">Geotag image</a></p>
+            <div class="imageBox">
+              <p><strong>Image Link:</strong></p>
+              <a href="${imageUrl}" target="_blank">View Geotag Image</a>
+            </div>
           `;
         } else {
           container.innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
