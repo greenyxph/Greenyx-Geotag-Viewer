@@ -39,7 +39,6 @@
       color: white;
       border: none;
       cursor: pointer;
-      border-radius: 4px;
     }
 
     button:hover {
@@ -49,14 +48,6 @@
     #imageContainer {
       margin-top: 20px;
       font-size: 13px;
-    }
-
-    #imageContainer img {
-      max-width: 100%;
-      height: auto;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-top: 10px;
     }
 
     .error {
@@ -101,8 +92,7 @@
 
         if (imageUrl.startsWith('http')) {
           container.innerHTML = `
-            <p><strong>Geotag Image:</strong></p>
-            <img src="${imageUrl}" alt="Geotag Image">
+            <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">Geotag image</a></p>
           `;
         } else {
           container.innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
