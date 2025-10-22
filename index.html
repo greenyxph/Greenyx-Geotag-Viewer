@@ -21,6 +21,10 @@
       color: red;
       font-weight: bold;
     }
+    .loading {
+      color: #555;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -36,25 +40,31 @@
   <script>
     async function loadImage() {
       let rsbsa = document.getElementById('rsbsaInput').value.trim();
-      rsbsa = rsbsa.replace(/\D/g, ''); // ✅ Normalize input by removing non-digit characters
+      rsbsa = rsbsa.replace(/\D/g, ''); // ✅ Normalize input
+
+      const container = document.getElementById('imageContainer');
+      container.innerHTML = '<p class="loading">Loading geotag image... please wait.</p>';
 
       const scriptBase = 'https://script.google.com/macros/s/AKfycbxUgUEfcJ3_0gkmab4YGVf4mVqiZ0428-oSHPOizCrjY6BjfUs5j6nGic5316ZPSDemGQ/exec';
 
       if (!rsbsa) {
-        document.getElementById('imageContainer').innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
+        container.innerHTML = '<p class="error">Please enter a valid RSBSA number.</p>';
         return;
       }
 
-      const response = await fetch(`${scriptBase}?rsbsa=${encodeURIComponent(rsbsa)}`);
-      const imageUrl = await response.text();
+      try {
+        const response = await fetch(`${scriptBase}?rsbsa=${encodeURIComponent(rsbsa)}`);
+        const imageUrl = await response.text();
 
-      const container = document.getElementById('imageContainer');
-      if (imageUrl.startsWith('http')) {
-        container.innerHTML = `
-          <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">Geotag image</a></p>
-        `;
-      } else {
-        container.innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
+        if (imageUrl.startsWith('http')) {
+          container.innerHTML = `
+            <p><strong>Image Link:</strong> <a href="${imageUrl}" target="_blank">Geotag image</a></p>
+          `;
+        } else {
+          container.innerHTML = `<p class="error">Walang larawang nahanap para sa RSBSA ${rsbsa}.</p>`;
+        }
+      } catch (error) {
+        container.innerHTML = `<p class="error">Error loading image. Please try again.</p>`;
       }
     }
   </script>
